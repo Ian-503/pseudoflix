@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Netflix - Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="login-body">
+
+    <div class="login-card">
+        <h2>Mini Netflix</h2>
+        <form id="login-form">
+            <div class="input-group">
+                <label>E-mail ou Usuário</label>
+                <input type="text" id="username" placeholder="ex: ian@email.com" required>
+            </div>
+            <div class="input-group">
+                <label>Senha</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn">Entrar</button>
+        </form>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('login-form');
+        
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const user = document.getElementById('username').value;
+            
+            // Lógica teórica / reservada para futura conexão com o Backend
+            console.log(`[Teoria de Login] Autenticando usuário: ${user}`);
+            
+            // Simula um token salvo na sessão e redireciona para a dashboard
+            sessionStorage.setItem('isLoggedIn', 'true');
+            sessionStorage.setItem('currentUser', user);
+            
+            // Redireciona para a tela principal
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>

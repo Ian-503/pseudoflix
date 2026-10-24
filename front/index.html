@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PseudoFlix - Início</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo">PseudoFlix</div>
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Pesquisar filmes por título ou gênero...">
+        </div>
+        <div class="header-spacer"></div>
+    </header>
+
+    <!-- Visualização Padrão: Fileiras por Categoria/Gênero -->
+    <div id="rows-wrapper">
+        <div class="row-section">
+            <h3 class="row-title">Filmes Mais Famosos</h3>
+            <div class="row-container" id="row-famous"></div>
+        </div>
+
+        <div class="row-section">
+            <h3 class="row-title">Filmes que você pode gostar (Recomendação Neo4j)</h3>
+            <div class="row-container" id="row-recommended"></div>
+        </div>
+
+        <div class="row-section">
+            <h3 class="row-title">Ação & Aventura</h3>
+            <div class="row-container" id="row-action"></div>
+        </div>
+
+        <div class="row-section">
+            <h3 class="row-title">Comédia</h3>
+            <div class="row-container" id="row-comedy"></div>
+        </div>
+
+        <div class="row-section">
+            <h3 class="row-title">Ficção Científica</h3>
+            <div class="row-container" id="row-scifi"></div>
+        </div>
+
+        <div class="row-section">
+            <h3 class="row-title">Terror & Suspense</h3>
+            <div class="row-container" id="row-horror"></div>
+        </div>
+    </div>
+
+    <!-- Visualização de Resultados da Pesquisa -->
+    <div id="search-results-section">
+        <h3 class="row-title" id="search-title">Resultados da Pesquisa</h3>
+        <div class="movies-grid" id="search-grid"></div>
+    </div>
+
+    <!-- MODAL / PAINEL DETALHADO DO FILME (EXPANDIDO) -->
+    <div class="modal-overlay" id="movie-modal">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="modal-close">&times;</button>
+            <div class="modal-header-banner" id="modal-media-container">
+                <!-- O trailer ou imagem entra aqui dinamicamente -->
+            </div>
+            <div class="modal-body">
+                <div class="modal-left">
+                    <h2 id="modal-title">Título do Filme</h2>
+                    <div class="modal-meta" id="modal-genre-year">Gênero • Ano • Duração</div>
+                    <p class="modal-synopsis" id="modal-synopsis">Sinopse de exemplo do filme. Aqui aparecerá a descrição detalhada que depois puxaremos do banco Neo4j.</p>
+                </div>
+                <div class="modal-right">
+                    <h4>Elenco Principal</h4>
+                    <p id="modal-cast">Ator 1, Ator 2, Ator 3</p>
+                    <br>
+                    <h4>Direção</h4>
+                    <p id="modal-director">Nome do Diretor</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Base de dados expandida com template de sinopse e links de vídeo/trailer
+        const moviesDatabase = [
+            { 
+                id: 1, title: "A Trip to the Moon", category: "famous", genre: "Ficção Científica", year: "1902", duration: "12m", 
+                poster: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=400", 
+                synopsis: "Um grupo de astrônomos viaja para a Lua em uma cápsula disparada por um canhão gigante, explorando a superfície lunar e escapando de selenitas.",
+                cast: "Georges Méliès, Victor André, Bleuet Bernon", director: "Georges Méliès",
+                trailer: "https://www.youtube.com/embed/Z1W284jT9gs?autoplay=1"
+            },
+            { 
+                id: 2, title: "Night of the Living Dead", category: "famous", genre: "Terror", year: "1968", duration: "1h 36m", 
+                poster: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=400", 
+                synopsis: "Sete pessoas ficam presas em uma fazenda na Pensilvânia enquanto cadáveres recém-ressuscitados começam a se alimentar dos vivos.",
+                cast: "Duane Jones, Judith O'Dea, Karl Hardman", director: "George A. Romero",
+                trailer: "https://www.youtube.com/embed/-_I5c2N5vrc?autoplay=1"
+            },
+            { 
+                id: 3, title: "Metropolis", category: "recommended", genre: "Ficção Científica", year: "1927", duration: "2h 33m", 
+                poster: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400", 
+                synopsis: "Em uma cidade futurista rigidamente dividida entre a classe operária e os planejadores da cidade, o filho do senhor da cidade apaixona-se por uma profetisa dos trabalhadores.",
+                cast: "Brigitte Helm, Alfred Abel, Gustav Fröhlich", director: "Fritz Lang",
+                trailer: "https://www.youtube.com/embed/ZS0xR3RTPs0?autoplay=1"
+            },
+            { 
+                id: 4, title: "The Phantom of the Opera", category: "recommended", genre: "Terror", year: "1925", duration: "1h 33m", 
+                poster: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400", 
+                synopsis: "Um homem mascarado e desfigurado assombra a Ópera de Paris, chantageando sua gestão para promover os talentos de uma jovem mulher.",
+                cast: "Lon Chaney, Mary Philbin, Norman Kerry", director: "Rupert Julian",
+                trailer: "https://www.youtube.com/embed/5a2i9r54w9I?autoplay=1"
+            },
+            { 
+                id: 5, title: "Plan 9 from Outer Space", category: "scifi", genre: "Ficção Científica", year: "1957", duration: "1h 19m", 
+                poster: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400", 
+                synopsis: "Aliens residentes emana planos nefastos para ressuscitar os mortos da Terra após a humanidade rejeitar suas advertências sobre armas atômicas.",
+                cast: "Bela Lugosi, Vampira, Tor Johnson", director: "Ed Wood",
+                trailer: "https://www.youtube.com/embed/f4T-c8a_9sk?autoplay=1"
+            },
+            { 
+                id: 6, title: "Nosferatu", category: "horror", genre: "Terror", year: "1922", duration: "1h 34m", 
+                poster: "https://images.unsplash.com/photo-1514539079130-25950c84af65?w=400", 
+                synopsis: "Conde Orlok, um vampiro milenar, viaja por Transilvânia em busca de uma nova residência e apaixona-se pela esposa de seu agente imobiliário.",
+                cast: "Max Schreck, Greta Schröder, Gustav von Wangenheim", director: "F.W. Murnau",
+                trailer: "https://www.youtube.com/embed/MC0Xv-qXn_w?autoplay=1"
+            },
+            { 
+                id: 7, title: "The Great Train Robbery", category: "action", genre: "Ação", year: "1903", duration: "10m", 
+                poster: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400", 
+                synopsis: "Um bando de fora da lei assalta um trem a vapor, foge com o dinheiro e é implacavelmente perseguido por um grupo de xerifes.",
+                cast: "A.C. Abadie, Bronco Billy Anderson, Justus D. Barnes", director: "Edwin S. Porter",
+                trailer: "https://www.youtube.com/embed/bc0p0V8lHhs?autoplay=1"
+            },
+            { 
+                id: 8, title: "The Kid (Charlie Chaplin)", category: "comedy", genre: "Comédia", year: "1921", duration: "1h 8m", 
+                poster: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400", 
+                synopsis: "O vagabundo Carlitos cria e educa um menino abandonado por sua mãe, formando uma dupla inseparável de trapaças e afeto.",
+                cast: "Charlie Chaplin, Edna Purviance, Jackie Coogan", director: "Charlie Chaplin",
+                trailer: "https://www.youtube.com/embed/W9lZ7a09qg8?autoplay=1"
+            }
+        ];
+
+        // --- LÓGICA DO MODAL (EXPANDIR AO CLICAR) ---
+        const modal = document.getElementById('movie-modal');
+        const modalClose = document.getElementById('modal-close');
+        const modalTitle = document.getElementById('modal-title');
+        const modalGenreYear = document.getElementById('modal-genre-year');
+        const modalSynopsis = document.getElementById('modal-synopsis');
+        const modalCast = document.getElementById('modal-cast');
+        const modalDirector = document.getElementById('modal-director');
+        const modalMediaContainer = document.getElementById('modal-media-container');
+
+        function openMovieModal(movie) {
+            modalTitle.textContent = movie.title;
+            modalGenreYear.textContent = `${movie.genre} • ${movie.year} • ${movie.duration}`;
+            modalSynopsis.textContent = movie.synopsis;
+            modalCast.textContent = movie.cast;
+            modalDirector.textContent = movie.director;
+
+            // Insere o trailer em iframe ou fallback para imagem se não houver
+            if (movie.trailer) {
+                modalMediaContainer.innerHTML = `<iframe src="${movie.trailer}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+            } else {
+                modalMediaContainer.innerHTML = `<img src="${movie.poster}" alt="${movie.title}">`;
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function closeMovieModal() {
+            modal.style.display = 'none';
+            modalMediaContainer.innerHTML = ''; // Para o vídeo ao fechar
+        }
+
+        modalClose.addEventListener('click', closeMovieModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeMovieModal();
+        });
+
+        // Criar os cards e adicionar o evento de clique
+        function createMovieCard(movie) {
+            const card = document.createElement('div');
+            card.className = 'movie-card';
+            card.innerHTML = `
+                <img src="${movie.poster}" alt="${movie.title}">
+                <div class="movie-info">${movie.title}</div>
+            `;
+            card.addEventListener('click', () => {
+                openMovieModal(movie);
+            });
+            return card;
+        }
+
+        // Popular as fileiras
+        function loadRows() {
+            const mappings = {
+                'famous': document.getElementById('row-famous'),
+                'recommended': document.getElementById('row-recommended'),
+                'action': document.getElementById('row-action'),
+                'comedy': document.getElementById('row-comedy'),
+                'scifi': document.getElementById('row-scifi'),
+                'horror': document.getElementById('row-horror')
+            };
+
+            moviesDatabase.forEach(movie => {
+                const container = mappings[movie.category];
+                if (container) {
+                    container.appendChild(createMovieCard(movie));
+                }
+            });
+        }
+
+        loadRows();
+
+        // Barra de pesquisa
+        const searchInput = document.getElementById('search-input');
+        const rowsWrapper = document.getElementById('rows-wrapper');
+        const searchResultsSection = document.getElementById('search-results-section');
+        const searchGrid = document.getElementById('search-grid');
+        const searchTitle = document.getElementById('search-title');
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+
+            if (query === '') {
+                rowsWrapper.style.display = 'block';
+                searchResultsSection.style.display = 'none';
+                return;
+            }
+
+            rowsWrapper.style.display = 'none';
+            searchResultsSection.style.display = 'block';
+            searchGrid.innerHTML = '';
+
+            const filtered = moviesDatabase.filter(m => 
+                m.title.toLowerCase().includes(query) || m.genre.toLowerCase().includes(query)
+            );
+            
+            searchTitle.textContent = `Resultados para: "${e.target.value}" (${filtered.length})`;
+
+            if (filtered.length === 0) {
+                searchGrid.innerHTML = '<p style="color: #888;">Nenhum filme encontrado.</p>';
+                return;
+            }
+
+            filtered.forEach(movie => {
+                searchGrid.appendChild(createMovieCard(movie));
+            });
+        });
+    </script>
+</body>
+</html>
