@@ -3,42 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini Netflix - Login</title>
+    <title>PseudoFlix - Login</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="login-body">
 
     <div class="login-card">
-        <h2>Mini Netflix</h2>
+        <h2 class="logo">PseudoFlix</h2>
+
+        <!-- LOGIN -->
         <form id="login-form">
             <div class="input-group">
-                <label>E-mail ou Usuário</label>
-                <input type="text" id="username" placeholder="ex: ian@email.com" required>
+                <label for="login">E-mail ou usuário</label>
+                <input type="text" id="login" placeholder="ex: ana@pseudoflix.com" required autocomplete="username">
             </div>
             <div class="input-group">
-                <label>Senha</label>
-                <input type="password" id="password" placeholder="••••••••" required>
+                <label for="password">Senha</label>
+                <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
             </div>
             <button type="submit" class="btn">Entrar</button>
+            <p class="form-switch">Não tem conta? <a href="#" id="show-register">Cadastre-se</a></p>
         </form>
+
+        <!-- CADASTRO -->
+        <form id="register-form" hidden>
+            <div class="input-group">
+                <label for="reg-username">Nome de usuário</label>
+                <input type="text" id="reg-username" required>
+            </div>
+            <div class="input-group">
+                <label for="reg-email">E-mail</label>
+                <input type="email" id="reg-email" required>
+            </div>
+            <div class="input-group">
+                <label for="reg-password">Senha</label>
+                <input type="password" id="reg-password" required minlength="4">
+            </div>
+            <button type="submit" class="btn">Criar conta</button>
+            <p class="form-switch">Já tem conta? <a href="#" id="show-login">Entrar</a></p>
+        </form>
+
+        <p class="form-message" id="message" role="alert"></p>
+        <p class="form-hint">Usuários de teste: <b>ana</b>, <b>bruno</b>, <b>carla</b>… <br>
+            e-mail <code>nome@pseudoflix.com</code>, senha <code>123456</code></p>
     </div>
 
+    <script src="api.js"></script>
     <script>
         const loginForm = document.getElementById('login-form');
-        
-        loginForm.addEventListener('submit', (e) => {
+        const registerForm = document.getElementById('register-form');
+        const message = document.getElementById('message');
+
+        // Se já está logado, vai direto para a home
+        if (Auth.getUser()) window.location.href = 'index.html';
+
+        function showMessage(text, ok = false) {
+            message.textContent = text;
+            message.className = 'form-message ' + (ok ? 'ok' : 'error');
+        }
+
+        document.getElementById('show-register').addEventListener('click', e => {
+            e.preventDefault(); loginForm.hidden = true; registerForm.hidden = false; showMessage('');
+        });
+        document.getElementById('show-login').addEventListener('click', e => {
+            e.preventDefault(); registerForm.hidden = true; loginForm.hidden = false; showMessage('');
+        });
+
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const user = document.getElementById('username').value;
-            
-            // Lógica teórica / reservada para futura conexão com o Backend
-            console.log(`[Teoria de Login] Autenticando usuário: ${user}`);
-            
-            // Simula um token salvo na sessão e redireciona para a dashboard
-            sessionStorage.setItem('isLoggedIn', 'true');
-            sessionStorage.setItem('currentUser', user);
-            
-            // Redireciona para a tela principal
-            window.location.href = 'index.html';
+            try {
+                const { user } = await api.post('/api/login', {
+                    email: document.getElementById('login').value.trim(),
+                    password: document.getElementById('password').value
+                });
+                Auth.setUser(user);
+                window.location.href = 'index.html';
+            } catch (err) {
+                showMessage(err.message);
+            }
+        });
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const { user } = await api.post('/api/register', {
+                    username: document.getElementById('reg-username').value.trim(),
+                    email: document.getElementById('reg-email').value.trim(),
+                    password: document.getElementById('reg-password').value
+                });
+                Auth.setUser(user);
+                window.location.href = 'index.html';
+            } catch (err) {
+                showMessage(err.message);
+            }
         });
     </script>
 </body>

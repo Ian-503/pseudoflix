@@ -13,240 +13,305 @@
         <div class="search-container">
             <input type="text" id="search-input" placeholder="Pesquisar filmes por título ou gênero...">
         </div>
-        <div class="header-spacer"></div>
+        <div class="user-area">
+            <span id="user-name"></span>
+            <button class="btn-link" id="logout-btn">Sair</button>
+        </div>
     </header>
 
-    <!-- Visualização Padrão: Fileiras por Categoria/Gênero -->
+    <p class="status-message" id="status-message"></p>
+
+    <!-- Visualização padrão: fileiras -->
     <div id="rows-wrapper">
         <div class="row-section">
-            <h3 class="row-title">Filmes Mais Famosos</h3>
-            <div class="row-container" id="row-famous"></div>
-        </div>
-
-        <div class="row-section">
-            <h3 class="row-title">Filmes que você pode gostar (Recomendação Neo4j)</h3>
+            <h3 class="row-title">Recomendados para você <span class="row-tag">Neo4j</span></h3>
             <div class="row-container" id="row-recommended"></div>
         </div>
 
-        <div class="row-section">
-            <h3 class="row-title">Ação & Aventura</h3>
-            <div class="row-container" id="row-action"></div>
+        <div class="row-section" id="section-history" hidden>
+            <h3 class="row-title">Assistidos recentemente</h3>
+            <div class="row-container" id="row-history"></div>
         </div>
 
         <div class="row-section">
-            <h3 class="row-title">Comédia</h3>
-            <div class="row-container" id="row-comedy"></div>
+            <h3 class="row-title">Mais curtidos</h3>
+            <div class="row-container" id="row-popular"></div>
         </div>
 
-        <div class="row-section">
-            <h3 class="row-title">Ficção Científica</h3>
-            <div class="row-container" id="row-scifi"></div>
-        </div>
-
-        <div class="row-section">
-            <h3 class="row-title">Terror & Suspense</h3>
-            <div class="row-container" id="row-horror"></div>
-        </div>
+        <!-- Fileiras por gênero são criadas dinamicamente -->
+        <div id="genre-rows"></div>
     </div>
 
-    <!-- Visualização de Resultados da Pesquisa -->
+    <!-- Resultados da pesquisa -->
     <div id="search-results-section">
         <h3 class="row-title" id="search-title">Resultados da Pesquisa</h3>
         <div class="movies-grid" id="search-grid"></div>
     </div>
 
-    <!-- MODAL / PAINEL DETALHADO DO FILME (EXPANDIDO) -->
+    <!-- MODAL DO FILME -->
     <div class="modal-overlay" id="movie-modal">
         <div class="modal-content">
-            <button class="modal-close-btn" id="modal-close">&times;</button>
-            <div class="modal-header-banner" id="modal-media-container">
-                <!-- O trailer ou imagem entra aqui dinamicamente -->
-            </div>
+            <button class="modal-close-btn" id="modal-close" aria-label="Fechar">&times;</button>
+            <div class="modal-header-banner" id="modal-media-container"></div>
             <div class="modal-body">
                 <div class="modal-left">
-                    <h2 id="modal-title">Título do Filme</h2>
-                    <div class="modal-meta" id="modal-genre-year">Gênero • Ano • Duração</div>
-                    <p class="modal-synopsis" id="modal-synopsis">Sinopse de exemplo do filme. Aqui aparecerá a descrição detalhada que depois puxaremos do banco Neo4j.</p>
+                    <h2 id="modal-title"></h2>
+                    <div class="modal-meta" id="modal-meta"></div>
+                    <div class="modal-actions">
+                        <button class="action-btn play" id="btn-play">▶ Assistir</button>
+                        <button class="action-btn" id="btn-like" title="Gostei">👍 <span id="like-count">0</span></button>
+                        <button class="action-btn" id="btn-dislike" title="Não gostei">👎 <span id="dislike-count">0</span></button>
+                    </div>
+                    <p class="modal-synopsis" id="modal-synopsis"></p>
                 </div>
                 <div class="modal-right">
-                    <h4>Elenco Principal</h4>
-                    <p id="modal-cast">Ator 1, Ator 2, Ator 3</p>
+                    <h4>Direção / Produção</h4>
+                    <p id="modal-director"></p>
                     <br>
-                    <h4>Direção</h4>
-                    <p id="modal-director">Nome do Diretor</p>
+                    <h4>Gêneros</h4>
+                    <p id="modal-genres"></p>
+                    <br>
+                    <h4>Fonte</h4>
+                    <p><a id="modal-source" target="_blank" rel="noopener">Internet Archive — domínio público</a></p>
                 </div>
+            </div>
+            <div class="modal-similar">
+                <h4>Quem curtiu este também curtiu</h4>
+                <div class="row-container small" id="row-similar"></div>
             </div>
         </div>
     </div>
 
+    <script src="api.js"></script>
     <script>
-        // Base de dados expandida com template de sinopse e links de vídeo/trailer
-        const moviesDatabase = [
-            { 
-                id: 1, title: "A Trip to the Moon", category: "famous", genre: "Ficção Científica", year: "1902", duration: "12m", 
-                poster: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=400", 
-                synopsis: "Um grupo de astrônomos viaja para a Lua em uma cápsula disparada por um canhão gigante, explorando a superfície lunar e escapando de selenitas.",
-                cast: "Georges Méliès, Victor André, Bleuet Bernon", director: "Georges Méliès",
-                trailer: "https://www.youtube.com/embed/Z1W284jT9gs?autoplay=1"
-            },
-            { 
-                id: 2, title: "Night of the Living Dead", category: "famous", genre: "Terror", year: "1968", duration: "1h 36m", 
-                poster: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=400", 
-                synopsis: "Sete pessoas ficam presas em uma fazenda na Pensilvânia enquanto cadáveres recém-ressuscitados começam a se alimentar dos vivos.",
-                cast: "Duane Jones, Judith O'Dea, Karl Hardman", director: "George A. Romero",
-                trailer: "https://www.youtube.com/embed/-_I5c2N5vrc?autoplay=1"
-            },
-            { 
-                id: 3, title: "Metropolis", category: "recommended", genre: "Ficção Científica", year: "1927", duration: "2h 33m", 
-                poster: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400", 
-                synopsis: "Em uma cidade futurista rigidamente dividida entre a classe operária e os planejadores da cidade, o filho do senhor da cidade apaixona-se por uma profetisa dos trabalhadores.",
-                cast: "Brigitte Helm, Alfred Abel, Gustav Fröhlich", director: "Fritz Lang",
-                trailer: "https://www.youtube.com/embed/ZS0xR3RTPs0?autoplay=1"
-            },
-            { 
-                id: 4, title: "The Phantom of the Opera", category: "recommended", genre: "Terror", year: "1925", duration: "1h 33m", 
-                poster: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400", 
-                synopsis: "Um homem mascarado e desfigurado assombra a Ópera de Paris, chantageando sua gestão para promover os talentos de uma jovem mulher.",
-                cast: "Lon Chaney, Mary Philbin, Norman Kerry", director: "Rupert Julian",
-                trailer: "https://www.youtube.com/embed/5a2i9r54w9I?autoplay=1"
-            },
-            { 
-                id: 5, title: "Plan 9 from Outer Space", category: "scifi", genre: "Ficção Científica", year: "1957", duration: "1h 19m", 
-                poster: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400", 
-                synopsis: "Aliens residentes emana planos nefastos para ressuscitar os mortos da Terra após a humanidade rejeitar suas advertências sobre armas atômicas.",
-                cast: "Bela Lugosi, Vampira, Tor Johnson", director: "Ed Wood",
-                trailer: "https://www.youtube.com/embed/f4T-c8a_9sk?autoplay=1"
-            },
-            { 
-                id: 6, title: "Nosferatu", category: "horror", genre: "Terror", year: "1922", duration: "1h 34m", 
-                poster: "https://images.unsplash.com/photo-1514539079130-25950c84af65?w=400", 
-                synopsis: "Conde Orlok, um vampiro milenar, viaja por Transilvânia em busca de uma nova residência e apaixona-se pela esposa de seu agente imobiliário.",
-                cast: "Max Schreck, Greta Schröder, Gustav von Wangenheim", director: "F.W. Murnau",
-                trailer: "https://www.youtube.com/embed/MC0Xv-qXn_w?autoplay=1"
-            },
-            { 
-                id: 7, title: "The Great Train Robbery", category: "action", genre: "Ação", year: "1903", duration: "10m", 
-                poster: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400", 
-                synopsis: "Um bando de fora da lei assalta um trem a vapor, foge com o dinheiro e é implacavelmente perseguido por um grupo de xerifes.",
-                cast: "A.C. Abadie, Bronco Billy Anderson, Justus D. Barnes", director: "Edwin S. Porter",
-                trailer: "https://www.youtube.com/embed/bc0p0V8lHhs?autoplay=1"
-            },
-            { 
-                id: 8, title: "The Kid (Charlie Chaplin)", category: "comedy", genre: "Comédia", year: "1921", duration: "1h 8m", 
-                poster: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400", 
-                synopsis: "O vagabundo Carlitos cria e educa um menino abandonado por sua mãe, formando uma dupla inseparável de trapaças e afeto.",
-                cast: "Charlie Chaplin, Edna Purviance, Jackie Coogan", director: "Charlie Chaplin",
-                trailer: "https://www.youtube.com/embed/W9lZ7a09qg8?autoplay=1"
+        const user = Auth.getUser();
+        if (!user) window.location.href = 'login.html';
+
+        document.getElementById('user-name').textContent = `Olá, ${user?.username || ''}`;
+        document.getElementById('logout-btn').addEventListener('click', Auth.logout);
+
+        let allMovies = [];
+        let interactions = { liked: [], disliked: [], watched: [] };
+        let currentMovie = null;
+
+        const $ = id => document.getElementById(id);
+        const statusMsg = $('status-message');
+        const showStatus = (text) => { statusMsg.textContent = text; statusMsg.hidden = !text; };
+
+        // ---------- Cards ----------
+        function createMovieCard(movie, reason) {
+            const card = document.createElement('div');
+            card.className = 'movie-card';
+
+            const img = document.createElement('img');
+            img.src = movie.posterUrl;
+            img.alt = movie.title;
+            img.loading = 'lazy';
+            img.onerror = () => { img.remove(); card.classList.add('no-poster'); };
+            card.appendChild(img);
+
+            const badge = document.createElement('span');
+            badge.className = 'card-badge';
+            if (interactions.liked.includes(movie.id)) badge.textContent = '👍';
+            else if (interactions.disliked.includes(movie.id)) badge.textContent = '👎';
+            else if (interactions.watched.includes(movie.id)) badge.textContent = '✓';
+            if (badge.textContent) card.appendChild(badge);
+
+            const info = document.createElement('div');
+            info.className = 'movie-info';
+            const title = document.createElement('strong');
+            title.textContent = movie.title;
+            info.appendChild(title);
+            if (reason) {
+                const r = document.createElement('small');
+                r.textContent = reason;
+                info.appendChild(r);
             }
-        ];
+            card.appendChild(info);
 
-        // --- LÓGICA DO MODAL (EXPANDIR AO CLICAR) ---
-        const modal = document.getElementById('movie-modal');
-        const modalClose = document.getElementById('modal-close');
-        const modalTitle = document.getElementById('modal-title');
-        const modalGenreYear = document.getElementById('modal-genre-year');
-        const modalSynopsis = document.getElementById('modal-synopsis');
-        const modalCast = document.getElementById('modal-cast');
-        const modalDirector = document.getElementById('modal-director');
-        const modalMediaContainer = document.getElementById('modal-media-container');
+            card.addEventListener('click', () => openMovieModal(movie.id));
+            return card;
+        }
 
-        function openMovieModal(movie) {
-            modalTitle.textContent = movie.title;
-            modalGenreYear.textContent = `${movie.genre} • ${movie.year} • ${movie.duration}`;
-            modalSynopsis.textContent = movie.synopsis;
-            modalCast.textContent = movie.cast;
-            modalDirector.textContent = movie.director;
-
-            // Insere o trailer em iframe ou fallback para imagem se não houver
-            if (movie.trailer) {
-                modalMediaContainer.innerHTML = `<iframe src="${movie.trailer}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-            } else {
-                modalMediaContainer.innerHTML = `<img src="${movie.poster}" alt="${movie.title}">`;
+        function fillRow(container, movies, withReason = false) {
+            container.innerHTML = '';
+            if (!movies.length) {
+                container.innerHTML = '<p class="empty">Nada por aqui ainda.</p>';
+                return;
             }
+            movies.forEach(m => container.appendChild(createMovieCard(m, withReason ? m.reason : null)));
+        }
 
+        // ---------- Carregamento ----------
+        async function loadInteractions() {
+            interactions = await api.get(`/api/users/${user.id}/interactions`);
+        }
+
+        async function loadPersonalRows() {
+            const [recs, history] = await Promise.all([
+                api.get(`/api/users/${user.id}/recommendations?limit=15`),
+                api.get(`/api/users/${user.id}/history?limit=6`)
+            ]);
+            fillRow($('row-recommended'), recs, true);
+            $('section-history').hidden = history.length === 0;
+            fillRow($('row-history'), history);
+        }
+
+        async function loadCatalog() {
+            const [movies, popular, genres] = await Promise.all([
+                api.get('/api/movies'),
+                api.get('/api/movies/popular?limit=15'),
+                api.get('/api/genres')
+            ]);
+            allMovies = movies;
+            fillRow($('row-popular'), popular);
+
+            const wrapper = $('genre-rows');
+            wrapper.innerHTML = '';
+            genres.forEach(g => {
+                const section = document.createElement('div');
+                section.className = 'row-section';
+                const h = document.createElement('h3');
+                h.className = 'row-title';
+                h.textContent = g.name;
+                const row = document.createElement('div');
+                row.className = 'row-container';
+                section.append(h, row);
+                wrapper.appendChild(section);
+                fillRow(row, movies.filter(m => m.genres.includes(g.name)));
+            });
+        }
+
+        async function init() {
+            try {
+                await loadInteractions();
+                await Promise.all([loadCatalog(), loadPersonalRows()]);
+                if (allMovies.length === 0) {
+                    showStatus('Nenhum filme no banco. Rode "npm run seed" na pasta backend.');
+                } else {
+                    showStatus('');
+                }
+            } catch (err) {
+                if (/Usuário não encontrado/.test(err.message)) return Auth.logout();
+                showStatus(err.message);
+            }
+        }
+
+        // Depois de like/dislike/assistir, atualiza o que depende do usuário
+        async function refreshAfterAction() {
+            await loadInteractions();
+            await Promise.all([loadPersonalRows(), loadCatalog()]);
+        }
+
+        // ---------- Modal ----------
+        const modal = $('movie-modal');
+        const media = $('modal-media-container');
+
+        function showPoster(movie) {
+            media.innerHTML = '';
+            const img = document.createElement('img');
+            img.src = movie.posterUrl;
+            img.alt = movie.title;
+            const play = document.createElement('button');
+            play.className = 'big-play';
+            play.textContent = '▶';
+            play.setAttribute('aria-label', 'Assistir');
+            play.addEventListener('click', playMovie);
+            media.append(img, play);
+        }
+
+        function updateRatingButtons() {
+            const id = currentMovie.id;
+            $('btn-like').classList.toggle('active', interactions.liked.includes(id));
+            $('btn-dislike').classList.toggle('active', interactions.disliked.includes(id));
+            $('like-count').textContent = currentMovie.likes;
+            $('dislike-count').textContent = currentMovie.dislikes;
+        }
+
+        async function openMovieModal(movieId) {
+            try {
+                currentMovie = await api.get(`/api/movies/${encodeURIComponent(movieId)}`);
+            } catch (err) { return showStatus(err.message); }
+
+            const m = currentMovie;
+            $('modal-title').textContent = m.title;
+            $('modal-meta').textContent = [m.genres.join(', '), m.year, m.runtime].filter(Boolean).join(' • ');
+            $('modal-synopsis').textContent = m.synopsis;
+            $('modal-director').textContent = m.director || 'Não informado';
+            $('modal-genres').textContent = m.genres.join(', ');
+            $('modal-source').href = m.pageUrl || '#';
+            showPoster(m);
+            updateRatingButtons();
             modal.style.display = 'flex';
+
+            const similar = await api.get(`/api/movies/${encodeURIComponent(m.id)}/similar`).catch(() => []);
+            fillRow($('row-similar'), similar, true);
         }
 
         function closeMovieModal() {
             modal.style.display = 'none';
-            modalMediaContainer.innerHTML = ''; // Para o vídeo ao fechar
+            media.innerHTML = ''; // para o vídeo
         }
 
-        modalClose.addEventListener('click', closeMovieModal);
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeMovieModal();
-        });
-
-        // Criar os cards e adicionar o evento de clique
-        function createMovieCard(movie) {
-            const card = document.createElement('div');
-            card.className = 'movie-card';
-            card.innerHTML = `
-                <img src="${movie.poster}" alt="${movie.title}">
-                <div class="movie-info">${movie.title}</div>
-            `;
-            card.addEventListener('click', () => {
-                openMovieModal(movie);
-            });
-            return card;
+        async function playMovie() {
+            const m = currentMovie;
+            media.innerHTML = `<iframe allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+            media.querySelector('iframe').src = m.videoUrl + '?autoplay=1';
+            try {
+                await api.post('/api/watch', { userId: user.id, movieId: m.id });
+                refreshAfterAction();
+            } catch (err) { showStatus(err.message); }
         }
 
-        // Popular as fileiras
-        function loadRows() {
-            const mappings = {
-                'famous': document.getElementById('row-famous'),
-                'recommended': document.getElementById('row-recommended'),
-                'action': document.getElementById('row-action'),
-                'comedy': document.getElementById('row-comedy'),
-                'scifi': document.getElementById('row-scifi'),
-                'horror': document.getElementById('row-horror')
-            };
-
-            moviesDatabase.forEach(movie => {
-                const container = mappings[movie.category];
-                if (container) {
-                    container.appendChild(createMovieCard(movie));
-                }
-            });
+        async function rate(kind) {
+            const m = currentMovie;
+            const already = kind === 'like' ? interactions.liked.includes(m.id) : interactions.disliked.includes(m.id);
+            const rating = already ? 'none' : kind; // clicar de novo remove a avaliação
+            try {
+                await api.post('/api/rate', { userId: user.id, movieId: m.id, rating });
+                currentMovie = await api.get(`/api/movies/${encodeURIComponent(m.id)}`);
+                await refreshAfterAction();
+                updateRatingButtons();
+            } catch (err) { showStatus(err.message); }
         }
 
-        loadRows();
+        $('btn-play').addEventListener('click', playMovie);
+        $('btn-like').addEventListener('click', () => rate('like'));
+        $('btn-dislike').addEventListener('click', () => rate('dislike'));
+        $('modal-close').addEventListener('click', closeMovieModal);
+        modal.addEventListener('click', e => { if (e.target === modal) closeMovieModal(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMovieModal(); });
 
-        // Barra de pesquisa
-        const searchInput = document.getElementById('search-input');
-        const rowsWrapper = document.getElementById('rows-wrapper');
-        const searchResultsSection = document.getElementById('search-results-section');
-        const searchGrid = document.getElementById('search-grid');
-        const searchTitle = document.getElementById('search-title');
-
+        // ---------- Pesquisa ----------
+        const searchInput = $('search-input');
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase().trim();
+            const rowsWrapper = $('rows-wrapper');
+            const results = $('search-results-section');
 
             if (query === '') {
                 rowsWrapper.style.display = 'block';
-                searchResultsSection.style.display = 'none';
+                results.style.display = 'none';
                 return;
             }
-
             rowsWrapper.style.display = 'none';
-            searchResultsSection.style.display = 'block';
-            searchGrid.innerHTML = '';
+            results.style.display = 'block';
 
-            const filtered = moviesDatabase.filter(m => 
-                m.title.toLowerCase().includes(query) || m.genre.toLowerCase().includes(query)
+            const filtered = allMovies.filter(m =>
+                m.title.toLowerCase().includes(query) ||
+                m.genres.some(g => g.toLowerCase().includes(query))
             );
-            
-            searchTitle.textContent = `Resultados para: "${e.target.value}" (${filtered.length})`;
-
+            $('search-title').textContent = `Resultados para: "${e.target.value}" (${filtered.length})`;
+            const grid = $('search-grid');
+            grid.innerHTML = '';
             if (filtered.length === 0) {
-                searchGrid.innerHTML = '<p style="color: #888;">Nenhum filme encontrado.</p>';
+                grid.innerHTML = '<p class="empty">Nenhum filme encontrado.</p>';
                 return;
             }
-
-            filtered.forEach(movie => {
-                searchGrid.appendChild(createMovieCard(movie));
-            });
+            filtered.forEach(m => grid.appendChild(createMovieCard(m)));
         });
+
+        if (user) init();
     </script>
 </body>
 </html>

@@ -66,9 +66,47 @@ header {
     max-width: 550px;
 }
 
-.header-spacer {
-    width: 100px;
+.user-area {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--text-muted);
+    font-size: 14px;
+    white-space: nowrap;
 }
+
+.btn-link {
+    background: none;
+    border: 1px solid #2a3d2e;
+    color: var(--text-color);
+    padding: 6px 14px;
+    border-radius: 16px;
+    cursor: pointer;
+}
+
+.btn-link:hover { border-color: var(--primary-green); color: var(--primary-green); }
+
+.status-message {
+    margin: 20px 40px 0;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: rgba(229, 72, 77, 0.12);
+    border: 1px solid rgba(229, 72, 77, 0.4);
+    color: #ffb4b4;
+}
+.status-message:empty { display: none; }
+
+.row-tag {
+    font-size: 11px;
+    color: var(--primary-green);
+    border: 1px solid var(--primary-green);
+    border-radius: 10px;
+    padding: 1px 8px;
+    vertical-align: middle;
+    margin-left: 6px;
+}
+
+.empty { color: var(--text-muted); font-size: 14px; }
 
 /* Seções e Fileiras de Filmes */
 .row-section {
@@ -102,8 +140,8 @@ header {
 
 /* Cards dos Filmes com Animação de Expansão */
 .movie-card {
-    flex: 0 0 220px;
-    height: 130px;
+    flex: 0 0 160px;
+    height: 240px;
     background: var(--card-bg);
     border-radius: 8px;
     overflow: hidden;
@@ -134,13 +172,41 @@ header {
     padding: 10px;
     font-size: 13px;
     font-weight: bold;
-    opacity: 0;
-    transition: opacity 0.3s;
 }
 
-.movie-card:hover .movie-info {
+.movie-info small {
+    display: block;
+    font-weight: normal;
+    color: var(--primary-green);
+    margin-top: 4px;
+    font-size: 11px;
+}
+
+.movie-card:hover .movie-info,
+.movie-card.no-poster .movie-info {
     opacity: 1;
 }
+
+.movie-card.no-poster {
+    background: linear-gradient(135deg, var(--dark-green), var(--card-bg));
+}
+
+.card-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(0, 0, 0, 0.75);
+    border-radius: 12px;
+    padding: 2px 7px;
+    font-size: 12px;
+}
+
+.row-container.small .movie-card {
+    flex: 0 0 120px;
+    height: 180px;
+}
+
+.row-container.small .movie-card:hover { transform: scale(1.05); }
 
 /* --- MODAL DE DETALHES DO FILME (EXPANDIDO) --- */
 .modal-overlay {
@@ -168,6 +234,8 @@ header {
     box-shadow: 0 20px 40px rgba(0,0,0,0.9);
     display: flex;
     flex-direction: column;
+    max-height: 92vh;
+    overflow-y: auto;
 }
 
 .modal-header-banner {
@@ -180,9 +248,51 @@ header {
 .modal-header-banner img, .modal-header-banner iframe {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     border: none;
 }
+
+.big-play {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(29, 185, 84, 0.9);
+    color: #000;
+    font-size: 30px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.big-play:hover { transform: scale(1.1); }
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    background: #0b0f0c;
+    color: var(--text-color);
+    border: 1px solid #2a3d2e;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.action-btn:hover { border-color: var(--primary-green); }
+.action-btn.play { background: var(--primary-green); color: #000; font-weight: bold; border-color: var(--primary-green); }
+.action-btn.active { background: var(--dark-green); border-color: var(--primary-green); color: #fff; }
+
+.modal-right a { color: var(--primary-green); }
+
+.modal-similar { padding: 0 30px 30px; }
+.modal-similar h4 { margin-bottom: 12px; color: #fff; }
 
 .modal-close-btn {
     position: absolute;
@@ -267,8 +377,68 @@ header {
     margin-top: 20px;
 }
 
+/* --- LOGIN --- */
+.login-body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: radial-gradient(circle at top, #12301b, var(--bg-color) 60%);
+}
+
+.login-card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--card-bg);
+    border: 1px solid rgba(29, 185, 84, 0.25);
+    border-radius: 12px;
+    padding: 32px 28px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+}
+
+.login-card h2 { text-align: center; margin-bottom: 24px; }
+
+.input-group { margin-bottom: 16px; }
+.input-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
+.input-group input {
+    width: 100%;
+    padding: 11px 14px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid #2a3d2e;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 15px;
+}
+.input-group input:focus { outline: none; border-color: var(--primary-green); }
+
+.btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary-green);
+    color: #000;
+    font-weight: bold;
+    font-size: 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.btn:hover { filter: brightness(1.1); }
+
+.form-switch { text-align: center; margin-top: 14px; font-size: 14px; color: var(--text-muted); }
+.form-switch a { color: var(--primary-green); }
+.form-message { margin-top: 14px; font-size: 14px; text-align: center; }
+.form-message.error { color: #ff8080; }
+.form-message.ok { color: var(--primary-green); }
+.form-hint { margin-top: 18px; font-size: 12px; color: var(--text-muted); text-align: center; line-height: 1.6; }
+.form-hint code { color: var(--text-color); }
+
 @media (max-width: 768px) {
     .modal-body {
         grid-template-columns: 1fr;
     }
+    header { padding: 14px 16px; flex-wrap: wrap; gap: 10px; }
+    .search-container { order: 3; flex-basis: 100%; margin: 0; }
+    .row-section { margin-left: 16px; }
+    .modal-header-banner { height: 220px; }
 }
